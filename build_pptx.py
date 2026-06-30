@@ -15,6 +15,10 @@ from pptx.util import Inches, Pt, Emu
 from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 from pptx.enum.shapes import MSO_SHAPE
+from PIL import Image
+import os
+
+ASSETS = "assets"
 
 # ----------------------------------------------------------------------------
 # Paleta (tono bronce / cine / arte africano)
@@ -169,6 +173,26 @@ def header(slide, section, label=None, sub=None, size=27):
               "font": FONT_B}])
 
 
+def image_contain(slide, fname, x, y, w, h, border=True):
+    """Coloca una imagen centrada en la caja (x,y,w,h) conservando proporción."""
+    path = os.path.join(ASSETS, fname)
+    iw, ih = Image.open(path).size
+    scale = min(w / iw, h / ih)
+    nw, nh = int(iw * scale), int(ih * scale)
+    pic = slide.shapes.add_picture(path, x + (w - nw) // 2, y + (h - nh) // 2,
+                                   nw, nh)
+    if border:
+        pic.line.color.rgb = BRONZE
+        pic.line.width = Pt(0.75)
+    return pic
+
+
+def caption(slide, x, y, w, text, size=10.5, color=GREY):
+    txt(slide, x, y, w, Inches(0.32),
+        [{"text": text, "size": size, "color": color, "italic": True,
+          "align": PP_ALIGN.CENTER, "font": FONT_B, "line_spacing": 0.95}])
+
+
 # ============================================================================
 # 1 — PORTADA
 # ============================================================================
@@ -178,7 +202,13 @@ rect(s, Inches(0), Inches(0), SW, Inches(0.14), BRONZE)
 rect(s, Inches(0), Inches(7.36), SW, Inches(0.14), BRONZE)
 rect(s, Inches(0.9), Inches(2.0), Inches(2.2), Pt(2.5), BRONZE)
 
-txt(s, Inches(0.9), Inches(0.95), Inches(11.5), Inches(0.5),
+# Logo Facultad de Letras · UMU sobre tarjeta blanca (arriba a la derecha)
+rect(s, Inches(11.0), Inches(0.6), Inches(1.7), Inches(1.7), WHITE,
+     shape=MSO_SHAPE.ROUNDED_RECTANGLE)
+image_contain(s, "logo_umu.jpeg", Inches(11.12), Inches(0.72),
+              Inches(1.46), Inches(1.46), border=False)
+
+txt(s, Inches(0.9), Inches(0.95), Inches(9.8), Inches(0.5),
     [{"text": "TRABAJO FIN DE GRADO  ·  GRADO EN HISTORIA DEL ARTE",
       "size": 14, "color": BRONZE, "bold": True, "font": FONT_B}])
 txt(s, Inches(0.9), Inches(2.3), Inches(11.6), Inches(2.2),
@@ -453,8 +483,14 @@ for i, (h, items) in enumerate(blocks):
           "align": PP_ALIGN.CENTER, "font": FONT_B}], anchor=MSO_ANCHOR.MIDDLE)
     card = rect(s, x, Inches(2.5), cw, Inches(3.95), WHITE)
     card.line.color.rgb = CREAM2; card.line.width = Pt(1)
-    bullets(s, x + Inches(0.22), Inches(2.72), cw - Inches(0.44), Inches(3.6),
+    bh = 1.7 if i == 0 else 3.6
+    bullets(s, x + Inches(0.22), Inches(2.72), cw - Inches(0.44), Inches(bh),
             items, size=12.5, gap=12, line_spacing=1.02)
+# Caricatura del reparto de África en la primera columna
+image_contain(s, "berlin.jpeg", Inches(cx + 0.22), Inches(4.3),
+              Inches(3.4), Inches(1.78))
+caption(s, Inches(cx + 0.12), Inches(6.14), Inches(3.6),
+        "Caricatura del reparto de África (L'Illustration, 1885)", size=9.5)
 footer(s, 8)
 
 # ============================================================================
@@ -538,34 +574,40 @@ s = add_slide()
 bg(s, CREAM)
 header(s, "Contenido del film: dos bloques de obras", label="Contenido · 3",
        size=26)
-rect(s, Inches(0.85), Inches(2.0), Inches(11.9), Inches(0.68), DARK)
-txt(s, Inches(1.1), Inches(2.0), Inches(11.4), Inches(0.68),
+rect(s, Inches(0.85), Inches(1.68), Inches(11.9), Inches(0.58), DARK)
+txt(s, Inches(1.1), Inches(1.68), Inches(11.4), Inches(0.58),
     [{"text": "«Cuando los hombres mueren, se vuelven historia. "
               "Cuando las estatuas mueren, se vuelven arte.»",
-      "size": 16, "color": CREAM, "italic": True, "font": FONT_H,
+      "size": 15, "color": CREAM, "italic": True, "font": FONT_H,
       "align": PP_ALIGN.CENTER}], anchor=MSO_ANCHOR.MIDDLE)
 
-rect(s, Inches(0.85), Inches(2.92), Inches(5.85), Inches(0.55), BRONZE)
-txt(s, Inches(0.85), Inches(2.92), Inches(5.85), Inches(0.55),
-    [{"text": "Bloque I · Realeza y poder", "size": 15, "color": WHITE,
-      "bold": True, "align": PP_ALIGN.CENTER, "font": FONT_B}],
-    anchor=MSO_ANCHOR.MIDDLE)
-bullets(s, Inches(1.05), Inches(3.62), Inches(5.5), Inches(2.8), [
-    "Cabezas de oba (Reino de Benín) y de oni (Reino de Ife), Nigeria.",
-    "Guerreros y leopardos de bronce de Benín (British Museum).",
-    "Montaje rítmico y fundidos: ¿colonizó Francia un pueblo «sin cultura»?",
-], size=13.5, gap=12)
 
-rect(s, Inches(7.0), Inches(2.92), Inches(5.75), Inches(0.55), BROWN)
-txt(s, Inches(7.0), Inches(2.92), Inches(5.75), Inches(0.55),
-    [{"text": "Bloque II · Culto y ritual", "size": 15, "color": WHITE,
-      "bold": True, "align": PP_ALIGN.CENTER, "font": FONT_B}],
-    anchor=MSO_ANCHOR.MIDDLE)
-bullets(s, Inches(7.2), Inches(3.62), Inches(5.4), Inches(2.8), [
-    "Relicarios Kota (Gabón); tableros de adivinación Ifá, Yoruba (Nigeria).",
-    "Reposacabezas Pende (R. D. del Congo); máscaras Dan (Costa de Marfil).",
-    "Culto animista y a los ancestros; piezas deliberadamente sin contexto.",
-], size=13.5, gap=12)
+def gallery_band(y_bar, label, color, row, y_img):
+    rect(s, Inches(0.85), Inches(y_bar), Inches(11.9), Inches(0.38), color)
+    txt(s, Inches(1.05), Inches(y_bar), Inches(11.5), Inches(0.38),
+        [{"text": label, "size": 13, "color": WHITE, "bold": True,
+          "font": FONT_B}], anchor=MSO_ANCHOR.MIDDLE)
+    bw, gap = 2.85, 0.13
+    x0 = 0.85 + (11.9 - (4 * bw + 3 * gap)) / 2
+    for j, (fn, cap) in enumerate(row):
+        x = Inches(x0 + j * (bw + gap))
+        image_contain(s, fn, x, Inches(y_img), Inches(bw), Inches(1.48))
+        caption(s, x, Inches(y_img + 1.5), Inches(bw), cap, size=9.5)
+
+
+gallery_band(2.4, "Bloque I · Realeza, poder y organización social", BRONZE, [
+    ("oba.jpeg", "Cabeza de oba · Benín"),
+    ("oni.jpeg", "Cabeza de oni · Ife"),
+    ("guerreros.jpeg", "Guerreros de Benín"),
+    ("leopardos.jpeg", "Leopardos · Benín"),
+], 2.84)
+
+gallery_band(4.64, "Bloque II · Culto, ritual y ancestros", BROWN, [
+    ("kota.jpeg", "Relicario Kota · Gabón"),
+    ("ifa.jpeg", "Tablero Ifá · Yoruba"),
+    ("pende.jpeg", "Reposacabezas Pende"),
+    ("dan.jpeg", "Máscara Dan · C. de Marfil"),
+], 5.08)
 footer(s, 11)
 
 # ============================================================================
